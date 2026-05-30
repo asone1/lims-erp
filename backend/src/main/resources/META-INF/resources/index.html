@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂單管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 40px; background-color: #f8f9fa; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 text-primary">📦 訂單即時看板</h1>
+            <button class="btn btn-success" onclick="fetchOrders()">🔄 重新整理</button>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>訂單 ID (Firestore UUID)</th>
+                            <th>訂單編號</th>
+                            <th>狀態</th>
+                            <th>詳細內容 (JSON)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-table-body">
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">正在載入訂單資料...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 自動向後端 Quarkus API 索取資料
+        async function fetchOrders() {
+            const tableBody = document.getElementById('order-table-body');
+            
+            try {
+                // 因為網頁跟 API 在同一個伺服器，直接寫相對路徑即可，絕不會有 CORS 錯誤
+                const response = await fetch('/api/orders');
+                const orders = await response.json();
+                
+                tableBody.innerHTML = ''; // 清空舊資料
+                
+                if (orders.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">目前沒有任何訂單</td></tr>`;
+                    return;
+                }
+                
+                // 將每筆訂單動態渲染到表格中
+                orders.forEach(order => {
+                    const row = `
+                        <tr>
+                            <td class="font-monospace text-secondary" style="font-size: 0.85rem;">${order.id}</td>
+                            <td><span class="badge bg-info text-dark">${order.orderNumber || '未生成'}</span></td>
+                            <td><span class="badge ${order.status === 'NEW' ? 'bg-warning' : 'bg-primary'}">${order.status}</span></td>
+                            <td><code>${JSON.stringify(order.properties || {})}</code></td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+                
+            } catch (error) {
+                console.error('讀取 API 失敗:', error);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">⚠️ 無法連線至後端服務</td></tr>`;
+            }
+        }
+
+        // 當網頁打開時，自動執行一次讀取
+        window.onload = fetchOrders;
+    </script>
+</body>
+</html>

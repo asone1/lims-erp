@@ -1,0 +1,31 @@
+{
+  "systemName": "LIMS-ERP-Core",
+  "version": "1.0.0",
+  "domains": {
+    "order": {
+      "status": "ACTIVE",
+      "description": "訂單領域核心邏輯"
+    },
+    "sample": {
+      "status": "ACTIVE"
+    }
+  },
+  "contracts": [
+    {
+      "fieldId": "ORDER_PROCESS_LOGIC",
+      "version": "1.0.0",
+      "behaviorHash": "default-hash-001",
+      "status": "ACTIVE",
+      "inputSchema": {
+        "jsonSchema": "{\"type\":\"object\"}"
+      },
+      "outputSchema": {
+        "jsonSchema": "{\"type\":\"object\"}"
+      }
+    }
+  ],
+  "globalRules": {
+    "requireCorrelationId": true,
+    "frozenDomains": []
+  }
+}
