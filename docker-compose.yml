@@ -19,11 +19,10 @@ services:
       - "8080:80" 
     depends_on:
       - frontend
-    # 💡 註：這裡刪除了 depends_on 底下的 backend，因為後端不在 Docker 裡了
 
-    redis:
+  redis:
     image: redis:alpine
     container_name: lims-redis
     ports:
-      - "6379:6379" # 映射到宿主機，讓外面的 Quarkus 可以連線
+      - "6379:6379"
     command: redis-server --save 60 1 --loglevel warning
