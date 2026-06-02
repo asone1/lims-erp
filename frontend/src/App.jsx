@@ -1,8 +1,11 @@
 // 所屬路徑: src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { OrderService } from './services/OrderService';
-import OrderForm from './components/forms/OrderForm';
-import OrderList from './components/OrderList';
+//import { OrderService } from './src/components/domain/order/OrderService';
+import { OrderService } from './components/domain/order/OrderService';
+//import { OrderService } from '@domain/order/OrderService';
+import OrderForm from '@domain/order/OrderForm';
+import OrderList from '@domain/order/OrderList';
+
 
 function App() {
     const [orders, setOrders] = useState([]);

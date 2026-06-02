@@ -9,7 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.ArrayList;
-
+import jakarta.inject.Inject;
 /**
  * 遵守: 總控層 (Governance Plane) - 集中派發所有的業務表單 Schema
  */
@@ -18,6 +18,27 @@ import java.util.ArrayList;
 @Produces(MediaType.APPLICATION_JSON)
 public class SchemaResource {
 
+    @Inject
+    SchemaConfigLoader configLoader;
+
+    @GET
+    @Path("/orders/list")
+    public Response getOrderListSchema(@QueryParam("templateType") String templateType) {
+        List<FormField> schema = new ArrayList<>();
+
+        // 1. 自動從 Record 映射出來的核心欄位 (此時 required 皆為 true)
+        schema.addAll(configLoader.getAllCoreFields());
+
+        // 2. 根據業務動態追加的屬性
+        if ("WATER".equalsIgnoreCase(templateType)) {
+            schema.add(configLoader.getPropertyField("source")); 
+        } else if ("BLOOD".equalsIgnoreCase(templateType)) {
+            schema.add(configLoader.getPropertyField("bloodType"));
+        }
+
+        return Response.ok(schema).build();
+    }
+    
     @GET
     @Path("/orders/create")
     public Response getCreateOrderSchema(@QueryParam("templateType") String templateType) {
@@ -58,4 +79,6 @@ public class SchemaResource {
             new FormField("properties.phValue", "預估酸鹼值 (pH)", "number", false, null) // 非必填
         );
     }
+
+    
 }

@@ -1,18 +1,34 @@
+import { LIMS_HEADERS } from '@constants/contractKeys';
+
 // 遵守: 集中管理 API 路徑，配合 API Gateway 路由
 const API_BASE_URL = '/api/orders';
 const SCHEMA_API_URL = '/api/schemas';
+
+/**
+ * 驗證環境變數是否成功注入 (除錯用，確認完畢後上線可移除)
+ */
+console.log("目前的 Field ID 是:", import.meta.env.VITE_LIMS_FIELD_ID);
+console.log("目前的 Behavior Hash 是:", import.meta.env.VITE_LIMS_BEHAVIOR_HASH);
+
+
 /**
  * 訂單服務層：負責與 Quarkus 後端進行資料交換
  * 遵守: 絕對禁止硬編碼 (No Hardcoding) - UI 呈現與驗證應依賴後端 Schema，此處僅做單純的資料傳輸層 (DTO 傳遞)
  */
 export const OrderService = {
+    
     /**
      * 遵守: SDUI - 向治理層取得版面契約
      * @param {string} schemaPath - 例如 'orders/create' 或 'orders/list'
      */
     async getSchema(schemaPath) {
         try {
-            const response = await fetch(`${SCHEMA_API_URL}/${schemaPath}`);
+            console.log("=== 準備發送 API，這時的 Headers 是 ===", LIMS_HEADERS());
+            // 修正：補上 headers 設定
+            const response = await fetch(`${SCHEMA_API_URL}/${schemaPath}`, {
+                method: 'GET',
+                headers: LIMS_HEADERS()
+            });
             if (!response.ok) {
                 throw new Error(`獲取 Schema 失敗: ${response.status}`);
             }
@@ -25,25 +41,32 @@ export const OrderService = {
     
     async getAllOrders() {
         try {
-            const response = await fetch(API_BASE_URL);
+            // 修正：補上 headers 設定
+            const response = await fetch(API_BASE_URL, {
+                method: 'GET',
+                headers: LIMS_HEADERS()
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+            console.warn( response);
             return await response.json();
         } catch (error) {
             // 遵守: 預期失敗 (Design for Failure) - 容錯處理，避免畫面崩潰
             console.error("無法獲取訂單列表:", error);
             return []; 
         }
+
     },
 
     async createOrder(orderData) {
         try {
             const response = await fetch(API_BASE_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                // 修正：使用 getLimsHeaders 組合 Content-Type
+                headers: LIMS_HEADERS({
+                    'Content-Type': 'application/json'
+                }),
                 // 遵守: SDUI 規範 - orderData 內部的 properties 必須由後端 Schema 定義，前端不寫死欄位
                 body: JSON.stringify(orderData),
             });
@@ -70,10 +93,11 @@ export const OrderService = {
         try {
             const response = await fetch(`${API_BASE_URL}/${orderNo}/accept`, {
                 method: 'PATCH', // 使用 PATCH 語意代表部分狀態更新
-                headers: {
+                // 修正：使用 getLimsHeaders 組合操作員 ID
+                headers: LIMS_HEADERS({
                     'Content-Type': 'application/json',
                     'X-Operator-Id': operatorId // 遵守: 操作員追蹤，透過 Header 傳遞避免污染 Payload
-                }
+                })
             });
 
             if (!response.ok) {
@@ -97,10 +121,11 @@ export const OrderService = {
         try {
             const response = await fetch(`${API_BASE_URL}/${orderId}`, {
                 method: 'DELETE',
-                headers: {
+                // 修正：使用 getLimsHeaders 組合操作員 ID
+                headers: LIMS_HEADERS({
                     'Content-Type': 'application/json',
                     'X-Operator-Id': operatorId
-                },
+                }),
                 body: JSON.stringify({ reason: reason }) // 遵守: 業務規則，必須附帶原因
             });
 

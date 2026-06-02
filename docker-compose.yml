@@ -19,6 +19,8 @@ services:
       - "8080:80" 
     depends_on:
       - frontend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   redis:
     image: redis:alpine
